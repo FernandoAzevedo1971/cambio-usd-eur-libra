@@ -48,3 +48,28 @@ function parseRate(raw: Record<string, string>, code: string): ExchangeRate {
     timestamp: parseInt(raw.timestamp) * 1000,
   };
 }
+
+export interface HistoryRate {
+  bid: number;
+  high: number;
+  low: number;
+  pctChange: number;
+  timestamp: number;
+}
+
+export async function fetchHistory(code: string, days: number): Promise<HistoryRate[]> {
+  const res = await fetch(
+    `https://economia.awesomeapi.com.br/json/daily/${code}-BRL/${days}`
+  );
+  if (!res.ok) throw new Error("Falha ao buscar histórico");
+  const data: Record<string, string>[] = await res.json();
+  return data
+    .map((item) => ({
+      bid: parseFloat(item.bid),
+      high: parseFloat(item.high),
+      low: parseFloat(item.low),
+      pctChange: parseFloat(item.pctChange),
+      timestamp: parseInt(item.timestamp) * 1000,
+    }))
+    .reverse();
+}

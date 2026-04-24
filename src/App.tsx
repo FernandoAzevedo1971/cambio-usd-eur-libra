@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useExchangeRates } from "./hooks/useExchangeRates";
 import { Header } from "./components/Header";
 import { CurrencyCard } from "./components/CurrencyCard";
 import { Converter } from "./components/Converter";
 import { LastUpdated } from "./components/LastUpdated";
+import { HistoryModal } from "./components/HistoryModal";
 
 function SkeletonCard() {
   return <div className="skeleton rounded-2xl h-[130px]" />;
@@ -10,6 +12,7 @@ function SkeletonCard() {
 
 export default function App() {
   const { rates, loading, error, lastUpdated, refresh } = useExchangeRates();
+  const [historyCode, setHistoryCode] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
@@ -34,15 +37,19 @@ export default function App() {
           </>
         ) : rates ? (
           <>
-            <CurrencyCard rate={rates.USD} />
-            <CurrencyCard rate={rates.EUR} />
-            <CurrencyCard rate={rates.GBP} />
+            <CurrencyCard rate={rates.USD} onHistory={() => setHistoryCode("USD")} />
+            <CurrencyCard rate={rates.EUR} onHistory={() => setHistoryCode("EUR")} />
+            <CurrencyCard rate={rates.GBP} onHistory={() => setHistoryCode("GBP")} />
             <Converter rates={rates} />
           </>
         ) : null}
       </main>
 
       <LastUpdated date={lastUpdated} />
+
+      {historyCode && (
+        <HistoryModal code={historyCode} onClose={() => setHistoryCode(null)} />
+      )}
     </div>
   );
 }

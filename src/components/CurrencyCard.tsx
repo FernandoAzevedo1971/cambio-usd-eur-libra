@@ -26,6 +26,7 @@ const ACCENT_COLORS: Record<string, { ring: string; badge: string; label: string
 
 interface CurrencyCardProps {
   rate: ExchangeRate;
+  onHistory: () => void;
 }
 
 function fmt(value: number) {
@@ -35,7 +36,7 @@ function fmt(value: number) {
   });
 }
 
-export function CurrencyCard({ rate }: CurrencyCardProps) {
+export function CurrencyCard({ rate, onHistory }: CurrencyCardProps) {
   const isPositive = rate.pctChange >= 0;
   const colors = ACCENT_COLORS[rate.code];
 
@@ -86,7 +87,7 @@ export function CurrencyCard({ rate }: CurrencyCardProps) {
         </span>
       </div>
 
-      {/* Var + High/Low */}
+      {/* Var + High/Low + History button */}
       <div className="mt-3 flex items-center justify-between">
         <span
           className={`text-xs font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}
@@ -94,13 +95,25 @@ export function CurrencyCard({ rate }: CurrencyCardProps) {
           {isPositive ? "+" : ""}
           {fmt(rate.varBid)} hoje
         </span>
-        <div className="flex items-center gap-3 text-[11px] text-slate-500">
-          <span>
-            <span className="text-emerald-500/70">↑</span> {fmt(rate.high)}
-          </span>
-          <span>
-            <span className="text-red-500/70">↓</span> {fmt(rate.low)}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+            <span>
+              <span className="text-emerald-500/70">↑</span> {fmt(rate.high)}
+            </span>
+            <span>
+              <span className="text-red-500/70">↓</span> {fmt(rate.low)}
+            </span>
+          </div>
+          <button
+            onClick={onHistory}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-400 hover:text-amber-400 transition-all active:scale-95 text-[10px] font-medium"
+            title="Ver histórico"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Histórico
+          </button>
         </div>
       </div>
     </div>
