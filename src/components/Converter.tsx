@@ -18,6 +18,10 @@ function fmt(value: number) {
   return value.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 }
 
+function fmtResult(value: number) {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export function Converter({ rates }: ConverterProps) {
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
@@ -110,7 +114,7 @@ export function Converter({ rates }: ConverterProps) {
         <div className="flex items-end gap-1.5">
           <span className="text-sm text-white/40 font-medium mb-0.5">{toSymbol}</span>
           <span className="text-3xl font-bold text-cyan-300 tracking-tight leading-none">
-            {fmt(result)}
+            {fmtResult(result)}
           </span>
         </div>
         <p className="text-[11px] text-white/25 mt-2">
