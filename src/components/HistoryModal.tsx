@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchHistory, HistoryRate } from "../lib/api";
 
-type Period = 5 | 15 | 30;
+type Period = 3 | 7 | 15 | 30;
 
 const FLAGS: Record<string, string> = {
   USD: "🇺🇸",
@@ -65,7 +65,7 @@ interface Props {
 }
 
 export function HistoryModal({ code, onClose }: Props) {
-  const [period, setPeriod] = useState<Period>(15);
+  const [period, setPeriod] = useState<Period>(7);
   const [data, setData] = useState<HistoryRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export function HistoryModal({ code, onClose }: Props) {
         </div>
 
         <div className="flex gap-2 px-5 mb-4 shrink-0">
-          {([5, 15, 30] as Period[]).map((p) => (
+          {([3, 7, 15, 30] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
