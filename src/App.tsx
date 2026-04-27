@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useExchangeRates } from "./hooks/useExchangeRates";
 import { Header } from "./components/Header";
 import { CurrencyCard } from "./components/CurrencyCard";
@@ -18,50 +18,78 @@ export default function App() {
   const [historyCode, setHistoryCode] = useState<string | null>(null);
   const [pullY, setPullY] = useState(0);
   const [isReleasing, setIsReleasing] = useState(false);
-  const touchStartY = useRef(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (window.scrollY === 0 && !loading) {
-      touchStartY.current = e.touches[0].clientY;
-      setIsReleasing(false);
-    }
-  }, [loading]);
+  const refreshRef = useRef(refresh);
+  const loadingRef = useRef(loading);
+  useEffect(() => { refreshRef.current = refresh; }, [refresh]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current < 0) return;
-    const delta = e.touches[0].clientY - touchStartY.current;
-    if (delta > 0) {
-      setPullY(Math.min(delta * 0.5, MAX_PULL));
-    } else {
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let startY = -1;
+    let curPullY = 0;
+
+    const onStart = (e: TouchEvent) => {
+      if (window.scrollY === 0 && !loadingRef.current) {
+        startY = e.touches[0].clientY;
+        setIsReleasing(false);
+      }
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (startY < 0) return;
+      const delta = e.touches[0].clientY - startY;
+      if (delta > 0) {
+        e.preventDefault();
+        curPullY = Math.min(delta * 0.5, MAX_PULL);
+        setPullY(curPullY);
+      } else {
+        curPullY = 0;
+        setPullY(0);
+      }
+    };
+
+    const onEnd = () => {
+      if (startY < 0) return;
+      setIsReleasing(true);
+      if (curPullY >= TRIGGER_THRESHOLD && !loadingRef.current) {
+        refreshRef.current();
+      }
+      curPullY = 0;
       setPullY(0);
-    }
-  }, []);
+      startY = -1;
+    };
 
-  const onTouchEnd = useCallback(() => {
-    if (touchStartY.current < 0) return;
-    setIsReleasing(true);
-    if (pullY >= TRIGGER_THRESHOLD && !loading) {
-      refresh();
-    }
-    setPullY(0);
-    touchStartY.current = -1;
-  }, [pullY, loading, refresh]);
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+    };
+  }, []);
 
   const pullProgress = Math.min(pullY / TRIGGER_THRESHOLD, 1);
   const pulling = pullProgress >= 1;
 
   return (
     <div
+      ref={containerRef}
       className="overflow-x-hidden"
       style={{ background: "#0a001f", minHeight: "100vh" }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
     >
-      {/* Pull indicator — revealed as content slides down */}
+      {/* Indicador revelado conforme a tela desce */}
       <div
-        className="fixed top-5 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center"
-        style={{ opacity: pullY > 4 ? pullProgress : 0, transition: isReleasing ? "opacity 0.3s" : "none" }}
+        className="fixed top-5 left-1/2 -translate-x-1/2 z-10"
+        style={{
+          opacity: pullY > 4 ? pullProgress : 0,
+          transition: isReleasing ? "opacity 0.3s" : "none",
+        }}
       >
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center border border-white/20"
@@ -81,7 +109,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Sliding content */}
+      {/* Conteúdo deslizante */}
       <div
         className="min-h-screen text-slate-50 flex flex-col relative overflow-x-hidden"
         style={{
@@ -91,7 +119,6 @@ export default function App() {
           willChange: "transform",
         }}
       >
-        {/* Background orbs */}
         <div className="fixed -top-24 -left-24 w-96 h-96 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)" }} />
         <div className="fixed bottom-10 -right-20 w-80 h-80 rounded-full pointer-events-none"
